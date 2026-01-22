@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="UTF-8">
+<title>Codenames KZ Online</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="/socket.io/socket.io.js"></script>
+<style>
+body{margin:0;font-family:system-ui;background:#111;color:#fff}
+.board{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:20px}
+.card{background:#eee;color:#111;padding:20px;text-align:center;font-weight:700;border-radius:10px;cursor:pointer}
+.opened.red{background:#e53935;color:#fff}
+.opened.blue{background:#1e88e5;color:#fff}
+.opened.gray{background:#ccc}
+.opened.black{background:#000;color:#fff}
+</style>
+</head>
+<body>
+
+<div class="board" id="board"></div>
+
+<script>
+const socket = io();
+const roomId = prompt("Room ID (любой одинаковый):");
+const role = prompt("role: player / master");
+const team = prompt("team: red / blue");
+
+socket.emit("joinRoom",{roomId,role,team});
+
+socket.on("state", game=>{
+  render(game);
+});
+
+function render(game){
+  const board=document.getElementById("board");
+  board.innerHTML="";
+  game.cards.forEach((c,i)=>{
+    const d=document.createElement("div");
+    d.className="card";
+    d.textContent=c.word;
+    if(c.open) d.classList.add("opened",c.color);
+    if(role==="master" && !c.open) d.style.opacity=.6;
+    d.onclick=()=>clickCard(i);
+    board.appendChild(d);
+  });
+}
+
+function clickCard(i){
+  if(role==="master") return;
+  socket.emit("clickCard",{roomId,index:i});
+}
+</script>
+
+</body>
+</html>
